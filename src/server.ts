@@ -13,6 +13,8 @@ app.use(bodyParser.json());
 
 app.use(cors());
 
+app.set('trust proxy', true)
+
 const color = colorize;
 
 interface Data {
@@ -23,6 +25,13 @@ const data: Data = {};
 
 app.post('/receive-data', (req: Request, res: Response) => {
     const { winner, loser, question } = req.body;
+    const allowednames = JSON.parse(fs.readFileSync('src/data/allowed-names.json').toString());
+    const allowedquestions = JSON.parse(fs.readFileSync('src/data/allowed-questions.json').toString());
+	if (!(allowednames.includes(winner) && allowedquestions.includes(question)) && question !== "get-elo-only") {
+		res.send({elo: {"Invalid": {"User sent invalid name/question": 1000}}});
+		console.log(`${req.ip} tried to send invalid question or name: ${question}, ${winner}`);
+        return
+	}
     const elopath = 'src/data/elo.json';
     const elodataBuffer = fs.readFileSync(elopath);
     const elodata = JSON.parse(elodataBuffer.toString());
